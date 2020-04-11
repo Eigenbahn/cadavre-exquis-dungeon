@@ -13,8 +13,8 @@ Not on pypi.
 
 You'd have to manually retrieve the source and run:
 
-    git clone https://github.com/Eigenbahn/cadavre-exquis-dungeon
-    cd cadavre-exquis-dungeon
-    conda env create
-    conda activate cadavre-exquis-dungeon-env
-    python3 cadavre_exquis_dungeon/__init__.py
+    $ git clone https://github.com/Eigenbahn/cadavre-exquis-dungeon
+    $ cd cadavre-exquis-dungeon
+    $ conda env create
+    $ conda activate cadavre-exquis-dungeon-env
+    $ python3 cadavre_exquis_dungeon/__init__.py
