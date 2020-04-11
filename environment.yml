@@ -1,0 +1,8 @@
+name: cadavre-exquis-dungeon-env
+dependencies:
+- python=3
+- pip
+- requests=2.*
+- PyYAML=5.*
+- pip:
+    - ai-dungeon-cli
