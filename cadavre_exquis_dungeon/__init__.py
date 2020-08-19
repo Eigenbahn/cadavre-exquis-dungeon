@@ -67,12 +67,13 @@ def main():
 
         ai_list = [AiDungeonGame(api_client, conf, tio) for tio in term_io_list]
 
-        if not ai_list[0].get_auth_token():
+        auth_token = ai_list[0].get_auth_token()
+        if not auth_token:
             ai_list[0].login()
             auth_token = ai_list[0].api.access_token
-            for i in range(1, nb_ia):
-                ai_list[i].api.access_token = auth_token
-                ai_list[i].api.update_session_access_token(auth_token)
+        for i in range(1, nb_ia):
+            ai_list[i].api.access_token = auth_token
+            ai_list[i].api.update_session_access_token(auth_token)
 
         prompt, settings = ai_list[0].api.get_options(ai_list[0].api.single_player_mode_id)
         custom_setting_scenario_id = None
