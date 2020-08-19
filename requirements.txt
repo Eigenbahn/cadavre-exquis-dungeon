@@ -1,0 +1,2 @@
+requests >= 2.23.0
+ai-dungeon-cli==0.4.4
