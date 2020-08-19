@@ -6,8 +6,7 @@ from time import sleep
 
 import requests # only for exceptions
 
-from ai_dungeon_cli import AiDungeon, Config, TermIo, \
-    FailedConfiguration, QuitSession
+from ai_dungeon_cli import AiDungeonGame, AiDungeonApiClient, Config, TermIo, QuitSession
 
 
 # -------------------------------------------------------------------------
@@ -26,11 +25,15 @@ class PipedTermIo(TermIo):
 
     def handle_user_input(self) -> str:
         text = self.io_pipe_in.value
+        # print('--------------')
+        # print('in:' + text)
         self.handle_basic_output(self.prompt + " " + text)
         return text
 
     def handle_story_output(self, text: str):
         self.io_pipe_out.value = text
+        # print('--------------')
+        # print('out:' + text)
 
 
 
@@ -40,7 +43,9 @@ class PipedTermIo(TermIo):
 def main():
 
     try:
-        conf = Config.loaded_from_file()
+        file_conf = Config.loaded_from_file()
+        cli_args_conf = Config.loaded_from_cli_args()
+        conf = Config.merged([file_conf, cli_args_conf])
 
         nb_ia = 2
 
@@ -58,29 +63,36 @@ def main():
 
         term_io = term_io_list[0] # for printing exceptions
 
-        ai_list = [AiDungeon(conf, tio) for tio in term_io_list]
+        api_client = AiDungeonApiClient()
+
+        ai_list = [AiDungeonGame(api_client, conf, tio) for tio in term_io_list]
 
         if not ai_list[0].get_auth_token():
             ai_list[0].login()
-            auth_token = ai_list[0].conf.auth_token
+            auth_token = ai_list[0].api.access_token
             for i in range(1, nb_ia):
-                ai_list[i].conf.auth_token = auth_token
+                ai_list[i].api.access_token = auth_token
+                ai_list[i].api.update_session_access_token(auth_token)
 
+        prompt, settings = ai_list[0].api.get_options(ai_list[0].api.single_player_mode_id)
+        custom_setting_scenario_id = None
+        for i, setting in settings.items():
+            setting_id, setting_name = setting
+            if setting_name == "custom":
+                custom_setting_scenario_id = setting_id
+                break
         for ai in ai_list:
-            ai.update_session_auth()
+            ai.api.scenario_id = custom_setting_scenario_id
 
         custom_story = "You are part of an exquisite corpse. Others are like you."
         for ai in ai_list:
-            ai.story_configuration = {
-                "storyMode": "custom",
-                "characterType": None,
-                "name": None,
-                "customPrompt": custom_story,
-                "promptId": None,
-            }
+            ai.api.story_pitch = None
+            ai.api._create_adventure(ai.api.scenario_id)
+            ai.api.init_custom_story_pitch(custom_story)
 
-        for ai in ai_list:
-            ai.init_story()
+        ai_list[-1].user_io.handle_story_output(ai_list[0].api.story_pitch)
+
+        print()
 
         i = 0
         while True:
@@ -89,13 +101,6 @@ def main():
             i += 1
             if i >= len(ai_list):
                 i = 0
-
-
-    except FailedConfiguration as e:
-        # NB: No UserIo initialized at this level
-        # hence we fallback to a classic `print`
-        print(e.message)
-        exit(1)
 
     except QuitSession:
         term_io.handle_basic_output("Bye Bye!")

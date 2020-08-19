@@ -5,4 +5,4 @@ dependencies:
 - requests=2.*
 - PyYAML=5.*
 - pip:
-    - ai-dungeon-cli
+    - ai-dungeon-cli==0.4.4
